@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>AI Calendar Pro — Email Accounts</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #f6f8fb; --panel:#fff; --muted:#334155; --accent1:linear-gradient(135deg,#7aa2ff,#7be3ff);
+    --accent2:#6b8cff; --success:#2ecc71; --danger:#ef4444; --shadow:0 8px 28px rgba(12,24,69,0.08); --radius:12px;
+  }
+  [data-theme="dark"]{
+    --bg:#07090b; --panel:#0f1720; --muted:#cbd5e1; --accent1:linear-gradient(135deg,#3b4b63,#2b6cb0);
+    --accent2:#2b6cb0; --success:#2ecc71; --danger:#fb7185; --shadow:0 10px 40px rgba(2,6,23,0.6);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial; background:var(--bg); color:var(--muted);
+    -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; transition:background .2s,color .2s;
+  }
+  header{ background:var(--panel); display:flex; align-items:center; justify-content:space-between; padding:18px 22px; box-shadow:var(--shadow); position:sticky; top:0; z-index:60; }
+  .brand{ display:flex; gap:14px; align-items:center; }
+  .logo{ width:46px; height:46px; border-radius:10px; background:var(--accent1); display:flex; align-items:center; justify-content:center; color:white; font-weight:800; font-size:18px; box-shadow:0 8px 24px rgba(79,109,255,0.12); }
+  h1{ font-size:18px; margin:0; color:inherit; font-weight:700; }
+  .controls{ display:flex; gap:10px; align-items:center; }
+  .small-muted{ font-size:13px; color:var(--muted); opacity:0.9; }
+  .btn{ background:transparent; border:none; padding:10px 12px; border-radius:10px; color:var(--muted); cursor:pointer; font-weight:600; }
+  .btn:hover{ transform:translateY(-2px); color:var(--accent2) }
+  .primary{ background:var(--accent1); color:white; padding:10px 14px; border-radius:12px; box-shadow:0 10px 28px rgba(79,109,255,0.12); }
+
+  main{ display:flex; gap:20px; padding:22px; max-width:1200px; margin:18px auto; }
+  .sidebar{ width:320px; min-width:240px; background:var(--panel); border-radius:var(--radius); padding:16px; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:12px; height:calc(100vh - 160px); position:sticky; top:86px; overflow:auto; }
+  .panel-title{ font-size:13px; color:var(--muted); font-weight:700; margin-bottom:6px; }
+  .stat{ background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent); padding:10px; border-radius:10px; width:48%; }
+  .num{ font-weight:700; font-size:18px; color:var(--accent2); }
+  .input, .select, .date{ padding:10px; border-radius:10px; border:1px solid rgba(10,20,40,0.06); background:transparent; color:inherit; flex:1; }
+
+  .calendar-wrap{ flex:1; display:flex; flex-direction:column; gap:14px; }
+  .cal-top{ display:flex; justify-content:space-between; align-items:center; gap:12px; }
+  .month-title{ font-weight:700; font-size:18px; color:inherit; }
+  .calendar{ background:var(--panel); padding:14px; border-radius:14px; box-shadow:var(--shadow); }
+  .weekdays{ display:grid; grid-template-columns:repeat(7,1fr); gap:6px; margin-bottom:8px; }
+  .weekday{ font-size:12px; color:var(--muted); text-align:center; }
+  .days{ display:grid; grid-template-columns:repeat(7,1fr); gap:8px; }
+  .day{ min-height:86px; border-radius:10px; padding:8px; cursor:pointer; border:1px solid rgba(0,0,0,0.03); transition:all .18s; position:relative; background:linear-gradient(180deg, transparent, transparent); }
+  .day:hover{ transform:translateY(-6px); box-shadow:0 10px 30px rgba(37,52,81,0.06); }
+  .date-num{ position:absolute; top:8px; left:8px; font-weight:700; color:var(--muted); }
+  .dots{ position:absolute; bottom:8px; left:8px; display:flex; gap:6px; align-items:center; }
+  .dot{ width:8px; height:8px; border-radius:50%; background:var(--accent2); }
+  .day.other{ opacity:0.45; }
+  .day.today{ outline:2px solid rgba(79,109,255,0.12); }
+
+  .day-panel{ width:360px; background:var(--panel); border-radius:var(--radius); padding:16px; box-shadow:var(--shadow); height:calc(100vh - 160px); position:sticky; top:86px; overflow:auto; }
+  .events{ display:flex; flex-direction:column; gap:12px; margin-top:8px; }
+  .event-card{ padding:12px; border-radius:10px; display:flex; justify-content:space-between; gap:8px; align-items:center; border:1px solid rgba(0,0,0,0.04); background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent); }
+  .badge{ padding:6px 8px; border-radius:8px; font-weight:700; font-size:12px; }
+  .badge.urgent{ background:linear-gradient(90deg,#ff7a7a,#ff4d4d); color:white; }
+  .badge.normal{ background:linear-gradient(90deg,#ffd88d,#ffb86b); color:#2b2b2b; }
+
+  #aiChatBtn{ position:fixed; bottom:22px; right:22px; background:linear-gradient(135deg,#7be3ff,#7aa2ff); color:white; border:none; padding:14px; border-radius:50%; box-shadow:0 10px 30px rgba(79,109,255,0.2); cursor:pointer; font-size:18px; z-index:120; }
+  #aiBox{ position:fixed; bottom:86px; right:22px; width:360px; max-height:520px; display:none; flex-direction:column; z-index:130; border-radius:12px; overflow:hidden; box-shadow:0 20px 50px rgba(6,10,26,0.4); }
+  .ai-header{ padding:12px 14px; background:linear-gradient(90deg,#7aa2ff,#7be3ff); color:white; font-weight:700; }
+  .ai-body{ background:var(--panel); padding:12px; display:flex; flex-direction:column; gap:8px; height:340px; overflow:auto; }
+  .ai-message{ padding:8px 10px; border-radius:10px; max-width:86%; font-size:14px; }
+  .ai-message.user{ align-self:flex-end; background:linear-gradient(90deg,#dfefff,#c7ddff); color:#0b1840; }
+  .ai-message.ai{ align-self:flex-start; background:linear-gradient(90deg,#f6f8fb,#eef6ff); color:inherit; }
+  .ai-input{ display:flex; gap:8px; padding:12px; background:var(--panel); border-top:1px solid rgba(0,0,0,0.04); }
+  .ai-input input{ flex:1; padding:10px; border-radius:10px; border:1px solid rgba(10,20,40,0.06); }
+
+  .login-modal{ display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(2,6,23,0.45); align-items:center; justify-content:center; z-index:200; }
+  .login-card{ width:380px; background:var(--panel); padding:18px; border-radius:12px; box-shadow:var(--shadow); }
+
+  @media (max-width:1024px){ main{ padding:14px } .sidebar{ display:none } .day-panel{ display:none } }
+  @media (max-width:640px){ .day{ min-height:72px } header{ flex-direction:column; align-items:flex-start; gap:8px } }
+</style>
+</head>
+<body data-theme="light">
+
+<header>
+  <div class="brand">
+    <div class="logo">AI</div>
+    <div>
+      <h1>AI Calendar Pro</h1>
+      <div style="font-size:12px;color:var(--muted)">Smart scheduling with email accounts</div>
+    </div>
+  </div>
+  <div class="controls">
+    <div class="small-muted" id="welcomeText">Not signed in</div>
+    <div>
+      <button class="btn" id="themeToggle">Toggle Theme</button>
+      <button class="btn" id="openLogin">Login / Register</button>
+      <button class="btn" id="deleteAccountBtn" style="display:none;color:var(--danger)">Delete Account</button>
+      <button class="btn" id="logoutBtn" style="display:none">Logout</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <aside class="sidebar">
+    <div>
+      <div class="panel-title">Overview</div>
+      <div style="display:flex; gap:10px; align-items:center; justify-content:space-between;">
+        <div class="stat"><div class="small-muted">Upcoming</div><div class="num" id="upcomingCount">0</div></div>
+        <div class="stat"><div class="small-muted">Pending</div><div class="num" id="pendingCount">0</div></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel-title">Quick Add Task</div>
+      <div style="display:flex; gap:8px;">
+        <input class="input" id="quickText" placeholder="Task title e.g. Study Math">
+      </div>
+      <div style="display:flex; gap:8px; margin-top:8px;">
+        <input type="date" id="quickDate" class="date">
+        <select id="quickPriority" class="select"><option value="normal">Normal</option><option value="urgent">Urgent</option></select>
+      </div>
+      <div style="display:flex; gap:8px; margin-top:8px;">
+        <button class="primary" onclick="quickAdd()">Add</button>
+        <button class="btn" onclick="clearQuick()">Clear</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel-title">To-Do (Your Tasks)</div>
+      <div id="todoListArea" style="display:flex;flex-direction:column; gap:8px; margin-top:8px;"></div>
+    </div>
+
+    <div>
+      <div class="panel-title">Jump to</div>
+      <div style="display:flex; gap:8px;"><select id="yearSelect" class="select" style="flex:1"></select><select id="monthSelect" class="select" style="flex:1"></select></div>
+      <div style="display:flex; gap:8px; margin-top:8px;"><button class="btn" onclick="goToToday()">Today</button><button class="btn" onclick="updateCalendar()">Go</button></div>
+    </div>
+  </aside>
+
+  <section class="calendar-wrap">
+    <div class="cal-top">
+      <div><div class="month-title" id="monthTitle"></div><div class="small-muted" id="monthSubtitle">Click a day to view tasks</div></div>
+      <div class="month-controls"><button class="btn" id="prevMonth">&larr;</button><button class="btn" id="nextMonth">&rarr;</button></div>
+    </div>
+
+    <div class="calendar">
+      <div class="weekdays" id="weekdays"></div>
+      <div class="days" id="daysGrid"></div>
+    </div>
+  </section>
+
+  <aside class="day-panel" id="dayPanel">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <div><div class="small-muted" id="dayPanelDateSmall"></div><h3 id="dayPanelDate">Select a day</h3></div>
+      <div style="display:flex; gap:8px;"><button class="btn" onclick="addEventToSelected()">Add Event</button></div>
+    </div>
+
+    <div style="margin-top:10px">
+      <div class="panel-title">Events & Tasks</div>
+      <div class="events" id="eventList"></div>
+    </div>
+
+    <div style="margin-top:12px">
+      <div class="panel-title">Add new event / task</div>
+      <input id="eventTitle" class="input" placeholder="Title (e.g. Finish essay)">
+      <div style="display:flex; gap:8px; margin-top:8px;"><input type="date" id="eventDate" class="date"><input type="time" id="eventTime" class="date"></div>
+      <div style="display:flex; gap:8px; margin-top:8px;">
+        <select id="eventPriority" class="select"><option value="normal">Normal</option><option value="urgent">Urgent</option></select>
+        <select id="eventType" class="select"><option value="task">Task</option><option value="event">Event</option></select>
+      </div>
+      <div style="display:flex; gap:8px; margin-top:8px;">
+        <button class="primary" onclick="confirmAddEvent()">Add</button>
+        <button class="btn" onclick="clearEventForm()">Clear</button>
+      </div>
+    </div>
+  </aside>
+</main>
+
+<div class="login-modal" id="loginModal">
+  <div class="login-card">
+    <h3 style="margin-top:0">Login / Register (Email)</h3>
+    <input id="loginEmail" class="input" placeholder="Email" />
+    <input id="loginPass" class="input" type="password" placeholder="Password" />
+    <div style="display:flex; gap:8px; margin-top:8px;">
+      <button class="primary" onclick="doLogin()">Login</button>
+      <button class="btn" onclick="doRegister()">Register</button>
+      <button class="btn" onclick="closeLogin()">Close</button>
+    </div>
+    <div id="loginMsg" style="margin-top:8px;color:var(--danger);font-weight:700"></div>
+  </div>
+</div>
+
+<button id="aiChatBtn" title="AI Assistant">💬</button>
+<div id="aiBox">
+  <div class="ai-header">AI Assistant • Planner</div>
+  <div class="ai-body" id="aiBody">
+    <div class="ai-message ai">Hello — I can add tasks, find free days, and suggest when to schedule activities. Try: <em>"Add hang out with friends on 2025-11-10"</em> or <em>"When am I free to hang out with friends?"</em></div>
+  </div>
+  <div class="ai-input"><input id="aiInput" placeholder="Ask: add ... / what's due / when am I free / suggest a day ..." /><button onclick="handleAI()">Send</button></div>
+</div>
+
+<script>
+/* ---------------------------
+   Utilities & storage helpers
+   --------------------------- */
+const $ = id => document.getElementById(id);
+const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+function uid(){ return 'id-' + Math.random().toString(36).slice(2,10); }
+function toISO(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` }
+function addDays(d,n){ const r=new Date(d); r.setDate(r.getDate()+n); return r; }
+function daysBetween(a,b){ return Math.round((new Date(b+'T00:00:00') - new Date(a+'T00:00:00'))/(24*3600*1000)); }
+
+/* ---------- password hashing with Web Crypto ---------- */
+async function hashPassword(password){
+  const enc = new TextEncoder();
+  const data = enc.encode(password);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+/* ---------- local DB layout ----------
+   ai_users: [{ email, passHash }]
+   ai_db: { email1: [events...], email2: [...] }
+   ai_current: email
+-----------------------------------------------------*/
+let users = JSON.parse(localStorage.getItem('ai_users') || '[]');
+let db = JSON.parse(localStorage.getItem('ai_db') || '{}');
+let currentUser = localStorage.getItem('ai_current') || null;
+
+/* Save helpers */
+function saveUsers(){ localStorage.setItem('ai_users', JSON.stringify(users)); }
+function saveDB(){ localStorage.setItem('ai_db', JSON.stringify(db)); updateOverview(); renderTodos(); renderSelectedDayIfOpen(); updateCalendar(); }
+
+/* ---------- Theme init ---------- */
+$('themeToggle').addEventListener('click', ()=>{
+  const t = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  document.body.setAttribute('data-theme', t); localStorage.setItem('ai_theme', t);
+});
+(function(){ const t = localStorage.getItem('ai_theme') || 'light'; document.body.setAttribute('data-theme', t); })();
+
+/* ---------- Year & month selectors (to 2070) ---------- */
+const current = new Date();
+let viewYear = current.getFullYear(), viewMonth = current.getMonth();
+const yearSelect = $('yearSelect'), monthSelect = $('monthSelect');
+
+function populateYearMonth(){
+  yearSelect.innerHTML=''; for(let y=current.getFullYear(); y<=2070; y++){ const op=document.createElement('option'); op.value=y; op.textContent=y; if(y===viewYear) op.selected=true; yearSelect.appendChild(op); }
+  monthSelect.innerHTML=''; MONTHS.forEach((m,i)=>{ const op=document.createElement('option'); op.value=i; op.textContent=m; if(i===viewMonth) op.selected=true; monthSelect.appendChild(op); });
+  yearSelect.onchange = ()=>{ viewYear = +yearSelect.value; updateCalendar(); };
+  monthSelect.onchange = ()=>{ viewMonth = +monthSelect.value; updateCalendar(); };
+}
+populateYearMonth();
+
+/* ---------- Calendar rendering ---------- */
+const weekdaysEl = $('weekdays'), daysGrid = $('daysGrid'), monthTitle = $('monthTitle'), monthSubtitle = $('monthSubtitle');
+
+function buildWeekdays(){ weekdaysEl.innerHTML=''; for(let d of DAYS){ const el=document.createElement('div'); el.className='weekday'; el.textContent=d; weekdaysEl.appendChild(el); } }
+buildWeekdays();
+
+function daysInMonth(y,m){ return new Date(y,m+1,0).getDate(); }
+function firstWeekday(y,m){ return new Date(y,m,1).getDay(); }
+
+function createDayCell(y,m,d, other=false){
+  const cell = document.createElement('div'); cell.className='day' + (other ? ' other' : '');
+  const num = document.createElement('div'); num.className='date-num'; num.textContent = d; cell.appendChild(num);
+  const iso = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  const userEvents = (currentUser && db[currentUser]) ? db[currentUser].filter(e => e.date === iso) : [];
+  const dots = document.createElement('div'); dots.className='dots';
+  userEvents.slice(0,3).forEach(ev=>{ const dot=document.createElement('div'); dot.className='dot'; dots.appendChild(dot); });
+  if(userEvents.length>3){ const more=document.createElement('div'); more.style.fontSize='12px'; more.style.marginLeft='6px'; more.style.color='var(--muted)'; more.textContent = '+' + (userEvents.length-3); dots.appendChild(more); }
+  cell.appendChild(dots);
+  const now = new Date(); if(now.getFullYear()===y && now.getMonth()===m && now.getDate()===d) cell.classList.add('today');
+  cell.onclick = ()=> openDayPanel(y,m,d);
+  return cell;
+}
+
+function updateCalendar(){
+  monthTitle.textContent = `${MONTHS[viewMonth]} ${viewYear}`;
+  monthSubtitle.textContent = `Click a day to view tasks & events`;
+  daysGrid.innerHTML = '';
+  const first = firstWeekday(viewYear, viewMonth);
+  const total = daysInMonth(viewYear, viewMonth);
+  const prevMonth = (viewMonth-1+12)%12; const prevYear = (viewMonth===0)?viewYear-1:viewYear;
+  const prevTotal = daysInMonth(prevYear, prevMonth);
+  for(let i = prevTotal - first + 1; i <= prevTotal; i++){ daysGrid.appendChild(createDayCell(prevYear, prevMonth, i, true)); }
+  for(let i=1;i<=total;i++){ daysGrid.appendChild(createDayCell(viewYear, viewMonth, i, false)); }
+  const currentCount = daysGrid.children.length; const needed = (7 - (currentCount % 7)) % 7;
+  for(let i=1;i<=needed;i++){ const nxMonth=(viewMonth+1)%12; const nxYear = viewMonth===11 ? viewYear+1 : viewYear; daysGrid.appendChild(createDayCell(nxYear, nxMonth, i, true)); }
+  renderTodos(); updateOverview();
+}
+
+/* ---------- Day panel ---------- */
+let selectedDay = null;
+const dayPanel = $('dayPanel'), dayPanelDate = $('dayPanelDate'), dayPanelDateSmall = $('dayPanelDateSmall'), eventList = $('eventList');
+
+function openDayPanel(y,m,d){
+  selectedDay = { y,m,d, iso: `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}` };
+  dayPanelDate.textContent = `${MONTHS[m]} ${d}, ${y}`;
+  dayPanelDateSmall.textContent = DAYS[new Date(y,m,d).getDay()];
+  $('eventDate').value = selectedDay.iso;
+  renderEventsForSelectedDay();
+  if(window.innerWidth <= 1024) dayPanel.scrollIntoView({behavior:'smooth'});
+}
+
+function renderEventsForSelectedDay(){
+  eventList.innerHTML=''; if(!currentUser){ eventList.innerHTML='<div class="small-muted">Login to see events</div>'; return; }
+  const list = (db[currentUser]||[]).filter(e=>e.date===selectedDay.iso);
+  if(!list || list.length===0){ eventList.innerHTML='<div class="small-muted">No tasks or events for this day.</div>'; return; }
+  list.sort((a,b)=> (a.priority==='urgent'?-1:1) - (b.priority==='urgent'?-1:1));
+  list.forEach(ev=>{
+    const card = document.createElement('div'); card.className='event-card';
+    const left = document.createElement('div'); left.innerHTML = `<div style="font-weight:700">${ev.title}</div><div style="font-size:12px;color:var(--muted)">${ev.time?ev.time+' • ':''}${ev.type} • ${ev.priority}</div>`;
+    const right = document.createElement('div'); right.style.display='flex'; right.style.gap='8px'; right.style.alignItems='center';
+    const badge = document.createElement('div'); badge.className = 'badge ' + (ev.priority==='urgent' ? 'urgent' : 'normal');
+    badge.textContent = (isOverdue(ev) && !ev.completed) ? 'Overdue' : (ev.priority==='urgent' ? 'Urgent' : 'Scheduled');
+    const btnComplete = document.createElement('button'); btnComplete.className='btn'; btnComplete.textContent = ev.completed ? 'Undo' : 'Done';
+    btnComplete.onclick = (e)=>{ e.stopPropagation(); toggleComplete(ev.id); };
+    const btnDelete = document.createElement('button'); btnDelete.className='btn'; btnDelete.textContent='Delete';
+    btnDelete.onclick = (e)=>{ e.stopPropagation(); deleteEvent(ev.id); };
+    right.appendChild(badge); right.appendChild(btnComplete); right.appendChild(btnDelete);
+    if(ev.completed){ left.style.textDecoration='line-through'; card.style.opacity=0.7; }
+    card.appendChild(left); card.appendChild(right); eventList.appendChild(card);
+  });
+}
+
+/* ---------- Event operations ---------- */
+function confirmAddEvent(){
+  if(!currentUser){ alert('Please login or register first.'); return; }
+  const title = $('eventTitle').value.trim(); const date = $('eventDate').value; const time = $('eventTime').value; const priority = $('eventPriority').value; const type = $('eventType').value;
+  if(!title || !date){ alert('Title and date required'); return; }
+  const ev = { id: uid(), title, date, time, priority, type, completed:false, createdAt: new Date().toISOString() };
+  db[currentUser] = db[currentUser] || []; db[currentUser].push(ev); saveDB(); clearEventForm(); if(selectedDay && selectedDay.iso===date) renderEventsForSelectedDay();
+}
+function addEventToSelected(){ if(!selectedDay){ alert('Select a day first'); return; } $('eventDate').value = selectedDay.iso; $('eventTitle').focus(); }
+function clearEventForm(){ $('eventTitle').value=''; $('eventDate').value=''; $('eventTime').value=''; $('eventPriority').value='normal'; $('eventType').value='task'; }
+
+function toggleComplete(id){
+  if(!currentUser) return; const list = db[currentUser]||[]; const ev = list.find(x=>x.id===id); if(!ev) return; ev.completed = !ev.completed; saveDB(); renderEventsForSelectedDay();
+}
+function deleteEvent(id){ if(!currentUser) return; db[currentUser] = (db[currentUser]||[]).filter(e=>e.id!==id); saveDB(); renderEventsForSelectedDay(); }
+
+/* ---------- Quick add & To-do rendering ---------- */
+$('quickDate').value = toISO(new Date());
+function quickAdd(){ if(!currentUser){ alert('Login first'); return; } const t=$('quickText').value.trim(); const d=$('quickDate').value || toISO(new Date()); const p=$('quickPriority').value; if(!t) return; const ev={ id:uid(), title:t, date:d, time:'', priority:p, type:'task', completed:false, createdAt:new Date().toISOString() }; db[currentUser]=db[currentUser]||[]; db[currentUser].push(ev); saveDB(); $('quickText').value=''; renderTodos(); updateCalendar(); }
+function clearQuick(){ $('quickText').value=''; $('quickDate').value=''; $('quickPriority').value='normal'; }
+
+function renderTodos(){
+  const area = $('todoListArea'); area.innerHTML=''; if(!currentUser){ area.innerHTML='<div class="small-muted">Login to manage tasks</div>'; return; }
+  const list = db[currentUser]||[]; if(list.length===0){ area.innerHTML='<div class="small-muted">No tasks yet</div>'; return; }
+  const sorted = [...list].sort((a,b)=> (a.completed!==b.completed) ? (a.completed?1:-1) : (a.priority!==b.priority ? (a.priority==='urgent'?-1:1) : (a.date||'').localeCompare(b.date||'')));
+  sorted.forEach(ev=>{
+    const card=document.createElement('div'); card.className='event-card'; card.style.display='flex'; card.style.justifyContent='space-between';
+    card.innerHTML = `<div style="flex:1"><div style="font-weight:700">${ev.title}</div><div style="font-size:12px;color:var(--muted)">${ev.date || 'No date'} ${ev.time? '• ' + ev.time : ''}</div></div>`;
+    const right=document.createElement('div'); right.style.display='flex'; right.style.flexDirection='column'; right.style.gap='6px';
+    const btnC=document.createElement('button'); btnC.className='btn'; btnC.textContent = ev.completed ? 'Undo' : 'Done'; btnC.onclick = ()=> toggleComplete(ev.id);
+    const btnD=document.createElement('button'); btnD.className='btn'; btnD.textContent='Del'; btnD.onclick = ()=> deleteEvent(ev.id);
+    right.appendChild(btnC); right.appendChild(btnD);
+    if(isOverdue(ev) && !ev.completed){ const w=document.createElement('div'); w.textContent='Overdue'; w.style.color='var(--danger)'; w.style.fontWeight='700'; w.style.fontSize='12px'; card.appendChild(w); }
+    card.appendChild(right); area.appendChild(card);
+  });
+  updateOverview();
+}
+
+/* ---------- Overview ---------- */
+function updateOverview(){
+  const up = $('upcomingCount'), pd = $('pendingCount'), welcome = $('welcomeText');
+  if(!currentUser){ up.textContent='—'; pd.textContent='—'; welcome.textContent='Not signed in'; $('openLogin').style.display='inline-block'; $('logoutBtn').style.display='none'; $('deleteAccountBtn').style.display='none'; return; }
+  welcome.textContent = `Signed in • ${currentUser}`; $('openLogin').style.display='none'; $('logoutBtn').style.display='inline-block'; $('deleteAccountBtn').style.display='inline-block';
+  const list = db[currentUser]||[]; const now = toISO(new Date());
+  const upcoming = list.filter(e => !e.completed && e.date && e.date >= now && daysBetween(now, e.date) <= 30).length;
+  const pending = list.filter(e => !e.completed).length;
+  up.textContent = upcoming; pd.textContent = pending;
+}
+
+/* ---------- Auth: email-only, with hashed password ---------- */
+const loginModal = $('loginModal');
+$('openLogin').addEventListener('click', ()=>{ loginModal.style.display='flex'; $('loginMsg').textContent=''; });
+$('logoutBtn').addEventListener('click', ()=>{ currentUser=null; localStorage.removeItem('ai_current'); updateOverview(); renderTodos(); updateCalendar(); });
+$('deleteAccountBtn').addEventListener('click', ()=>{ if(!currentUser) return; if(!confirm('Delete account and all data? This cannot be undone.')) return; deleteAccount(); });
+
+function closeLogin(){ loginModal.style.display='none'; }
+
+async function doRegister(){
+  const email = $('loginEmail').value.trim().toLowerCase(); const pass = $('loginPass').value; const msg=$('loginMsg');
+  msg.style.color='var(--danger)'; msg.textContent='';
+  if(!validateEmail(email) || !pass){ msg.textContent='Enter a valid email and password'; return; }
+  if(users.find(u=>u.email===email)){ msg.textContent='Email already registered'; return; }
+  const hash = await hashPassword(pass);
+  users.push({ email, passHash:hash }); saveUsers(); if(!db[email]) db[email]=[]; saveDB(); msg.style.color='green'; msg.textContent='Registered — you can log in now.';
+}
+
+async function doLogin(){
+  const email = $('loginEmail').value.trim().toLowerCase(); const pass = $('loginPass').value; const msg=$('loginMsg');
+  msg.style.color='var(--danger)'; msg.textContent='';
+  if(!validateEmail(email) || !pass){ msg.textContent='Enter valid email & password'; return; }
+  const hash = await hashPassword(pass);
+  const found = users.find(u=>u.email===email && u.passHash===hash);
+  if(!found){ msg.textContent='Invalid email or password'; return; }
+  currentUser = email; localStorage.setItem('ai_current', currentUser); loginModal.style.display='none'; $('loginMsg').textContent=''; updateOverview(); renderTodos(); updateCalendar();
+}
+
+function deleteAccount(){
+  if(!currentUser) return;
+  users = users.filter(u=>u.email!==currentUser); saveUsers();
+  delete db[currentUser]; saveDB();
+  currentUser=null; localStorage.removeItem('ai_current'); updateOverview(); renderTodos(); updateCalendar();
+}
+
+function validateEmail(e){ return /\S+@\S+\.\S+/.test(e); }
+
+/* ---------- AI Assistant logic (planner) ---------- */
+const aiBtn = $('aiChatBtn'), aiBox = $('aiBox'), aiBody = $('aiBody');
+aiBtn.addEventListener('click', ()=>{ aiBox.style.display = aiBox.style.display === 'flex' ? 'none' : 'flex'; });
+function appendAI(text, from='ai'){ const m = document.createElement('div'); m.className = 'ai-message ' + (from==='user' ? 'user' : 'ai'); m.textContent = text; aiBody.appendChild(m); aiBody.scrollTop = aiBody.scrollHeight; }
+
+function isOverdue(ev){ if(!ev.date) return false; const today = toISO(new Date()); return !ev.completed && ev.date < today; }
+
+function listFreeDaysInRange(startISO, endISO, maxTasksPerDay=1){
+  // returns array of ISO strings where user has <= maxTasksPerDay tasks
+  if(!currentUser) return [];
+  const list = db[currentUser] || [];
+  const start = new Date(startISO + 'T00:00:00'); const end = new Date(endISO + 'T00:00:00');
+  const free = [];
+  for(let d = new Date(start); d <= end; d = addDays(d,1)){
+    const iso = toISO(d);
+    const count = list.filter(e => e.date === iso && !e.completed).length;
+    if(count <= maxTasksPerDay) free.push(iso);
+  }
+  return free;
+}
+
+function findGoodDaysForEvent(rangeDays=14){
+  // find next rangeDays days and score them; return top 3 suggested days
+  const today = new Date();
+  const days = [];
+  for(let i=0;i<rangeDays;i++){
+    const d = addDays(today, i);
+    const iso = toISO(d);
+    const count = (db[currentUser] || []).filter(e => e.date === iso && !e.completed).length;
+    days.push({ iso, count, weekday: DAYS[d.getDay()] });
+  }
+  // prefer days with smallest count; also prefer weekend (Sat/Sun) slightly
+  days.forEach(d => { const wk = new Date(d.iso).getDay(); d.score = d.count + (wk===6 || wk===0 ? -0.25 : 0); });
+  days.sort((a,b) => a.score - b.score);
+  return days.slice(0,3);
+}
+
+/* AI handler: understands:
+   - add <title> on YYYY-MM-DD
+   - add <title> tomorrow
+   - add <title> (no date) => added today
+   - when am I free / when can I hang out / suggest day for "X"
+   - what's due today / tomorrow / this week
+   - pending / overdue
+*/
+async function handleAI(){
+  const raw = $('aiInput').value.trim(); if(!raw) return; appendAI(raw, 'user'); $('aiInput').value='';
+  const text = raw.toLowerCase();
+
+  setTimeout(async ()=>{
+    // Add pattern: add <title> on YYYY-MM-DD
+    if(text.startsWith('add ')){
+      // check for "on YYYY-MM-DD" or "due YYYY-MM-DD"
+      let m = text.match(/^add\s+(.+?)\s+(?:on|due)\s+(\d{4}-\d{2}-\d{2})$/i);
+      if(m){
+        const title = capitalize(m[1]); const date = m[2];
+        if(!currentUser){ appendAI('Please login so I can save that task.'); return; }
+        const ev = { id: uid(), title, date, time:'', priority:'normal', type:'task', completed:false, createdAt:new Date().toISOString() };
+        db[currentUser] = db[currentUser]||[]; db[currentUser].push(ev); saveDB(); appendAI(`Added "${title}" for ${date}.`); return;
+      }
+      // "add <title> tomorrow"
+      m = text.match(/^add\s+(.+?)\s+tomorrow$/i);
+      if(m){
+        if(!currentUser){ appendAI('Please login so I can save that task.'); return; }
+        const title = capitalize(m[1]); const iso = toISO(addDays(new Date(),1));
+        const ev = { id: uid(), title, date: iso, time:'', priority:'normal', type:'task', completed:false, createdAt:new Date().toISOString() };
+        db[currentUser] = db[currentUser]||[]; db[currentUser].push(ev); saveDB(); appendAI(`Added "${title}" for tomorrow (${iso}).`); return;
+      }
+      // "add <title>" (no date) -> add today
+      m = text.match(/^add\s+(.+)/i);
+      if(m){
+        if(!currentUser){ appendAI('Please login so I can save that task.'); return; }
+        const title = capitalize(m[1]); const iso = toISO(new Date());
+        const ev = { id: uid(), title, date: iso, time:'', priority:'normal', type:'task', completed:false, createdAt:new Date().toISOString() };
+        db[currentUser] = db[currentUser]||[]; db[currentUser].push(ev); saveDB(); appendAI(`Added "${title}" for today (${iso}).`); return;
+      }
+    }
+
+    // what's due tomorrow
+    if(text.includes('due tomorrow') || text.includes("what's due tomorrow") || text.includes('due tmw')){
+      if(!currentUser){ appendAI('Please login so I can check your tasks.'); return; }
+      const iso = toISO(addDays(new Date(),1)); const list = (db[currentUser]||[]).filter(e => e.date === iso);
+      if(list.length===0) appendAI('You have nothing due tomorrow.'); else appendAI(`Due tomorrow (${iso}): ${list.map(x=>x.title).join(', ')}`); return;
+    }
+    // what's due today
+    if(text.includes('due today') || text.includes("what's due today")){
+      if(!currentUser){ appendAI('Please login so I can check your tasks.'); return; }
+      const iso = toISO(new Date()); const list = (db[currentUser]||[]).filter(e => e.date === iso);
+      if(list.length===0) appendAI('No tasks due today.'); else appendAI(`Due today: ${list.map(x=>x.title).join(', ')}`); return;
+    }
+
+    // pending / overdue counts
+    if(text.includes('pending') || text.includes('how many pending')){
+      if(!currentUser){ appendAI('Please login so I can check.'); return; }
+      const pending = (db[currentUser]||[]).filter(e => !e.completed).length; appendAI(`${pending} pending task(s).`); return;
+    }
+    if(text.includes('overdue')){
+      if(!currentUser){ appendAI('Please login to check overdue tasks.'); return; }
+      const overdue = (db[currentUser]||[]).filter(e => !e.completed && isOverdue(e));
+      if(overdue.length===0) appendAI('You have no overdue tasks — good job!');
+      else appendAI(`Overdue: ${overdue.map(x=>x.title + ' ('+x.date+')').join('; ')}`); return;
+    }
+
+    // When am I free / suggest a day to hang out
+    if(text.includes('when am i free') || text.includes('when can i') || text.includes('when should i') || text.includes('what day suits') || text.includes('hang out')){
+      if(!currentUser){ appendAI('Login so I can check your schedule and suggest days.'); return; }
+      // examine next 14 days and suggest up to 3 best days
+      const suggestions = findGoodDaysForEvent(14);
+      if(!suggestions || suggestions.length===0){ appendAI('I couldn\'t find a free day soon. Try clearing or re-scheduling some tasks.'); return; }
+      const textOut = suggestions.map(s => {
+        const pretty = `${s.iso} (${s.weekday})`;
+        if(s.count === 0) return `${pretty} — totally free`;
+        if(s.count === 1) return `${pretty} — light day (1 item)`;
+        return `${pretty} — has ${s.count} item(s)`;
+      }).join('\n');
+      appendAI(`Based on your next 14 days, good options:\n${textOut}`);
+      return;
+    }
+
+    // schedule suggestion for specific due: "suggest schedule for X due YYYY-MM-DD"
+    if(text.startsWith('suggest') && text.includes('due')){
+      const m = text.match(/suggest.*for\s+(.+?)\s+due\s+(\d{4}-\d{2}-\d{2})/i);
+      if(m){
+        if(!currentUser){ appendAI('Login first.'); return; }
+        const title = capitalize(m[1]), due = m[2];
+        const suggestion = findBestDayBefore(due, currentUser);
+        if(!suggestion) appendAI(`I couldn't find a free day before ${due}. Consider splitting the task.`);
+        else appendAI(`I suggest scheduling "${title}" on ${suggestion}. It's a free slot before ${due}.`);
+        return;
+      }
+    }
+
+    // fallback
+    appendAI("I can: add tasks (e.g. 'Add watch film tomorrow'), tell you 'due today/tomorrow', show 'pending' or 'overdue', and 'suggest' free days. Try phrasing like: 'When am I free to hang out with friends?'.");
+  }, 300);
+}
+
+/* ---------- AI helper functions ---------- */
+function findBestDayBefore(dueISO, user){
+  const start = new Date(); const due = new Date(dueISO + 'T00:00:00');
+  for(let dt = new Date(start); dt < due; dt = addDays(dt,1)){
+    const iso = toISO(dt); const count = (db[user]||[]).filter(e => e.date === iso).length;
+    if(count < 2) return iso;
+  }
+  return null;
+}
+
+function findGoodDaysForEvent(rangeDays=14){
+  const list = []; const today = new Date();
+  for(let i=0;i<rangeDays;i++){
+    const d = addDays(today, i); const iso = toISO(d);
+    const count = (db[currentUser]||[]).filter(e => e.date === iso && !e.completed).length;
+    list.push({ iso, count, weekday: DAYS[d.getDay()] });
+  }
+  list.forEach(d => { const wk = new Date(d.iso).getDay(); d.score = d.count + (wk===6 || wk===0 ? -0.25 : 0); });
+  list.sort((a,b)=> a.score - b.score);
+  return list.slice(0,3);
+}
+
+/* ---------- Login UI wiring ---------- */
+$('openLogin').addEventListener('click', ()=>{ $('loginMsg').textContent=''; loginModal.style.display='flex'; });
+function closeLogin(){ loginModal.style.display='none'; $('loginMsg').textContent=''; $('loginEmail').value=''; $('loginPass').value=''; }
+
+async function doRegister(){ await doRegister(); } // placeholder to avoid unused eslint; actual function defined earlier
+
+/* Note: actual register/login functions are defined higher (doRegister/doLogin) */
+
+/* ---------- Delete account / logout buttons ---------- */
+$('logoutBtn').addEventListener('click', ()=>{ currentUser = null; localStorage.removeItem('ai_current'); updateOverview(); renderTodos(); updateCalendar(); $('openLogin').style.display = 'inline-block'; $('logoutBtn').style.display='none'; $('deleteAccountBtn').style.display='none'; });
+
+/* ---------- Misc UI wiring ---------- */
+$('prevMonth').addEventListener('click', ()=>{ viewMonth--; if(viewMonth<0){ viewMonth=11; viewYear--; } yearSelect.value = viewYear; monthSelect.value = viewMonth; updateCalendar(); });
+$('nextMonth').addEventListener('click', ()=>{ viewMonth++; if(viewMonth>11){ viewMonth=0; viewYear++; } yearSelect.value = viewYear; monthSelect.value = viewMonth; updateCalendar(); });
+$('yearSelect').addEventListener('change', ()=>{ viewYear = +yearSelect.value; updateCalendar(); });
+$('monthSelect').addEventListener('change', ()=>{ viewMonth = +monthSelect.value; updateCalendar(); });
+function goToToday(){ viewYear = (new Date()).getFullYear(); viewMonth = (new Date()).getMonth(); yearSelect.value = viewYear; monthSelect.value = viewMonth; updateCalendar(); }
+
+/* ---------- Startup & persistence ---------- */
+function init(){
+  users = JSON.parse(localStorage.getItem('ai_users') || '[]');
+  db = JSON.parse(localStorage.getItem('ai_db') || '{}');
+  currentUser = localStorage.getItem('ai_current') || null;
+  if(currentUser){ $('openLogin').style.display='none'; $('logoutBtn').style.display='inline-block'; $('deleteAccountBtn').style.display='inline-block'; }
+  updateCalendar(); renderTodos(); updateOverview();
+  $('quickDate').value = toISO(new Date());
+}
+init();
+
+/* ---------- small helper (redeclare doRegister/doLogin tied to hashed functions) ---------- */
+async function doRegister(){
+  const email = $('loginEmail').value.trim().toLowerCase(); const pass = $('loginPass').value; const msg=$('loginMsg');
+  msg.style.color='var(--danger)'; msg.textContent='';
+  if(!validateEmail(email) || !pass){ msg.textContent='Enter a valid email and password'; return; }
+  if(users.find(u=>u.email===email)){ msg.textContent='Email already registered'; return; }
+  const hash = await hashPassword(pass);
+  users.push({ email, passHash: hash }); saveUsers();
+  if(!db[email]) db[email] = []; saveDB();
+  msg.style.color='green'; msg.textContent='Registered — you can log in now.';
+}
+async function doLogin(){
+  const email = $('loginEmail').value.trim().toLowerCase(); const pass = $('loginPass').value; const msg=$('loginMsg');
+  msg.style.color='var(--danger)'; msg.textContent='';
+  if(!validateEmail(email) || !pass){ msg.textContent='Enter valid email & password'; return; }
+  const hash = await hashPassword(pass);
+  const found = users.find(u => u.email===email && u.passHash===hash);
+  if(!found){ msg.textContent='Invalid email or password'; return; }
+  currentUser = email; localStorage.setItem('ai_current', currentUser); loginModal.style.display='none'; $('loginMsg').textContent=''; updateOverview(); renderTodos(); updateCalendar();
+}
+
+/* ---------- small helpers ---------- */
+function validateEmail(e){ return /\S+@\S+\.\S+/.test(e); }
+function capitalize(s){ return s.charAt(0).toUpperCase() + s.slice(1); }
+function renderSelectedDayIfOpen(){ if(selectedDay) renderEventsForSelectedDay(); }
+
+/* ---------- auto refresh for UI (overdue markings etc) ---------- */
+setInterval(()=>{ renderTodos(); renderSelectedDayIfOpen(); updateCalendar(); }, 60000);
+
+</script>
+</body>
+</html>
